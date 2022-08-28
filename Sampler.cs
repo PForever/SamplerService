@@ -28,4 +28,4 @@ class Sampler : ISampler
     }
     private static bool HasRegistration(string rowResult) => rowResult == "На ближайшие 2 недели записи нет";
 }
-public readonly record struct SampleResult(string? RowResult, bool? hasRegistration, HttpStatusCode StatusCode);
+public readonly record struct SampleResult(string? RowResult, bool? HasRegistration, HttpStatusCode StatusCode);
