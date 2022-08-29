@@ -64,14 +64,14 @@ class BusinessWorker : IBusinessWorker{
     }
     public async Task DoWorkAsync(CancellationToken token){
         _logger.LogInformation("Sampling..");
-        var result = await _sampler.SampleAsync(token);
+        var (result, resposeChanged) = await _sampler.SampleAsync(token);
         _logger.LogInformation(result.StatusCode.ToString());
         _logger.LogInformation(result.RowResult);
 
-        if (result.HasNoRegistration is true) return;
+        if (!resposeChanged) return;
 
         _logger.LogInformation("Sending..");
-        await _botService.SendMessage($"Response: {result.RowResult} (Http code: {result.StatusCode}). Go to https://italy-vms.ru/autoform/ NOW!", token);
+        await _botService.SendMessage($"Response: {result.RowResult} (Http code: {result.StatusCode}).{(resposeChanged ? "Go to https://italy-vms.ru/autoform/ NOW!" : "")}", token);
         _logger.LogInformation("Message send");
     }
 }

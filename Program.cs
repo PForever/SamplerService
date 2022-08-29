@@ -24,6 +24,7 @@ services.AddHttpClient("telegram_bot_client")
 services.AddScoped<ISampler, Sampler>();
 services.AddScoped<IBotService, BotService>();
 services.AddScoped<IBusinessWorker, BusinessWorker>();
+services.AddSingleton<IResposeCache, ResposeCache>();
 
 var app = builder.Build();
 
