@@ -23,7 +23,7 @@ class Sampler : ISampler
         using var reader = new StreamReader(contentStream);
         var content = await reader.ReadToEndAsync();
 
-        var response = new SampleResult(content, httpResponseMessage.StatusCode);
+        var response = new SampleResult(content, HasNoRegistration(content), httpResponseMessage.StatusCode);
 
         if(_resposeCache.CashedRespose == response)
             return (response, false);
@@ -31,6 +31,6 @@ class Sampler : ISampler
         _resposeCache.CashedRespose = response;
         return (response, true);
     }
-    //private static bool HasNoRegistration(string rowResult) => rowResult == "На ближайшие 2 недели записи нет";
+    private static bool HasNoRegistration(string rowResult) => rowResult == "На ближайшие 2 недели записи нет";
 }
-public readonly record struct SampleResult(string? RowResult, HttpStatusCode StatusCode);
+public readonly record struct SampleResult(string? RowResult, bool? HasNoRegistration, HttpStatusCode StatusCode);
