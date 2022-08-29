@@ -68,7 +68,7 @@ class BusinessWorker : IBusinessWorker{
         _logger.LogInformation(result.StatusCode.ToString());
         _logger.LogInformation(result.RowResult);
 
-        if (result.HasRegistration is not true) return;
+        if (result.HasNoRegistration is true) return;
 
         _logger.LogInformation("Sending..");
         await _botService.SendMessage($"Response: {result.RowResult} (Http code: {result.StatusCode}). Go to https://italy-vms.ru/autoform/ NOW!", token);

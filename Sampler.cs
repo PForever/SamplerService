@@ -22,10 +22,10 @@ class Sampler : ISampler
             using var reader = new StreamReader(contentStream);
             var content = await reader.ReadToEndAsync();
             
-            return new(content, HasRegistration(content), httpResponseMessage.StatusCode);
+            return new(content, HasNoRegistration(content), httpResponseMessage.StatusCode);
         }
         return new(null, null, httpResponseMessage.StatusCode);
     }
-    private static bool HasRegistration(string rowResult) => rowResult == "На ближайшие 2 недели записи нет";
+    private static bool HasNoRegistration(string rowResult) => rowResult == "На ближайшие 2 недели записи нет";
 }
-public readonly record struct SampleResult(string? RowResult, bool? HasRegistration, HttpStatusCode StatusCode);
+public readonly record struct SampleResult(string? RowResult, bool? HasNoRegistration, HttpStatusCode StatusCode);
