@@ -71,7 +71,7 @@ class BusinessWorker : IBusinessWorker{
         if (!resposeChanged) return;
 
         _logger.LogInformation("Sending..");
-        await _botService.SendMessage($"Response: {result.RowResult} (Http code: {result.StatusCode}).{(resposeChanged ? "Go to https://italy-vms.ru/autoform/ NOW!" : "")}", token);
+        await _botService.SendMessage($"Response: {result.RowResult} (Http code: {result.StatusCode}).{(result.HasNoRegistration is true ? "" : "Go to https://italy-vms.ru/autoform/ NOW!")}", token);
         _logger.LogInformation("Message send");
     }
 }
