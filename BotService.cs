@@ -1,6 +1,4 @@
 using Telegram.Bot;
-using Telegram.Bot.Polling;
-using Telegram.Bot.Types.Enums;
 
 interface IBotService{
     Task SendMessage(string message, CancellationToken token);
@@ -18,6 +16,13 @@ class BotService : IBotService
         var me = await _botClient.GetMeAsync(token);
         _logger.LogInformation("Start sending message", me.Username ?? "My Awesome Bot");
 
-        await _botClient.SendTextMessageAsync("-1001726786731", message, cancellationToken: token);
+        try
+        {
+            await _botClient.SendTextMessageAsync("-1001726786731", message, cancellationToken: token);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Can't send message to telegram");
+        }
     }
 }
