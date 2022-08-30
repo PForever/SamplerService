@@ -1,5 +1,3 @@
-using System.Security.Cryptography.X509Certificates;
-
 namespace SamplerService;
 
 public class Worker : BackgroundService
@@ -64,11 +62,11 @@ class BusinessWorker : IBusinessWorker{
     }
     public async Task DoWorkAsync(CancellationToken token){
         _logger.LogInformation("Sampling..");
-        var (result, resposeChanged) = await _sampler.SampleAsync(token);
+        var (result, validResposeChanged) = await _sampler.SampleAsync(token);
         _logger.LogInformation(result.StatusCode.ToString());
         _logger.LogInformation(result.RowResult);
 
-        if (!resposeChanged) return;
+        if (!validResposeChanged) return;
 
         _logger.LogInformation("Sending..");
         await _botService.SendMessage($"Response: {result.RowResult} (Http code: {result.StatusCode}).{(result.HasNoRegistration is true ? "" : "Go to https://italy-vms.ru/autoform/ NOW!")}", token);
