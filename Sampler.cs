@@ -3,7 +3,7 @@ namespace SamplerService;
 using System.Net;
 
 interface ISampler{
-    Task<(SampleResult Result, bool ResponseChanged)> SampleAsync(CancellationToken token);
+    Task<(SampleResult Result, bool ValidResponseChanged)> SampleAsync(CancellationToken token);
 }
 class Sampler : ISampler
 {
@@ -14,7 +14,7 @@ class Sampler : ISampler
         _httpClientFactory = httpClientFactory;
         _resposeCache = resposeCache;
     }
-    public async Task<(SampleResult Result, bool ResponseChanged)> SampleAsync(CancellationToken token){
+    public async Task<(SampleResult Result, bool ValidResponseChanged)> SampleAsync(CancellationToken token){
         var httpClient = _httpClientFactory.CreateClient(HttpClientNames.VisaTimetable);
         var httpResponseMessage = await httpClient.GetAsync(
             "vcs/get_nearest.htm?center=11&persons=&urgent=0&lang=ru", token);
@@ -24,6 +24,9 @@ class Sampler : ISampler
         var content = await reader.ReadToEndAsync();
 
         var response = new SampleResult(content, HasNoRegistration(content), httpResponseMessage.StatusCode);
+
+        if(response.StatusCode != HttpStatusCode.OK)
+            return (response, false);
 
         if(_resposeCache.CashedRespose == response)
             return (response, false);
