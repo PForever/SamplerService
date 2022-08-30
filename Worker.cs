@@ -36,7 +36,9 @@ public class Worker : BackgroundService
             {
                 break;
             }
-            
+            catch (Exception e) {
+                _logger.LogError(e, "Job failed");
+            }
         }
     }
 
