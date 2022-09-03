@@ -10,7 +10,9 @@ services.AddHttpClient(HttpClientNames.VisaTimetable, httpClient =>
     httpClient.BaseAddress = new Uri("https://italy-vms.ru/");
 });
 
-services.Configure<BotConfiguration>(builder.Configuration.GetSection(BotConfiguration.Configuration));
+services.AddConfiguration<BotConfiguration>(builder.Configuration);
+services.AddConfiguration<BotConfiguration>(builder.Configuration);
+
 services.AddScoped<LoggingHandler>();
 
 services.AddHttpClient("telegram_bot_client")
@@ -21,10 +23,11 @@ services.AddHttpClient("telegram_bot_client")
     return new TelegramBotClient(options, httpClient);
 }).AddHttpMessageHandler<LoggingHandler>();
 
-services.AddScoped<ISampler, Sampler>();
+services.AddScoped<IRegistrationService, RegistrationService>();
 services.AddScoped<IBotService, BotService>();
 services.AddScoped<IBusinessWorker, BusinessWorker>();
 services.AddSingleton<IResposeCache, ResposeCache>();
+services.AddSingleton<IMessageCache, MessageCache>();
 
 var app = builder.Build();
 

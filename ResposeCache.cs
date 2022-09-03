@@ -8,10 +8,10 @@ namespace SamplerService;
 
 public interface IResposeCache
 {
-    SampleResult CashedRespose { get; set; }
+    ReservInfo? DateOfRegistration { get; set; }
 }
 
 public class ResposeCache : IResposeCache
 {
-    public SampleResult CashedRespose { get; set; }
+    public ReservInfo? DateOfRegistration { get; set; }
 }

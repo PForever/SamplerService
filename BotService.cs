@@ -1,3 +1,4 @@
+using SamplerService;
 using Telegram.Bot;
 
 interface IBotService{
@@ -7,6 +8,7 @@ interface IBotService{
 class BotService : IBotService
 {
     private readonly ITelegramBotClient _botClient;
+    private readonly IMessageCache _messageCache;
     private readonly ILogger<BotService> _logger;
     public BotService(ILogger<BotService> logger, ITelegramBotClient botClient){
         _logger = logger;
