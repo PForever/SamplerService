@@ -11,4 +11,9 @@ public static class Extensions
 
         return o.Value;
     }
+    public static IServiceCollection AddConfiguration<T>(this IServiceCollection services, IConfiguration configuration) where T : class
+    {
+        services.Configure<T>(configuration.GetSection(typeof(T).Name));
+        return services;
+    }
 }
