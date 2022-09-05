@@ -2,41 +2,45 @@ using HtmlAgilityPack;
 using Microsoft.Extensions.Options;
 using SamplerService.SystemHelpers;
 using System.Net;
+using System.Net.Http;
 
-namespace SamplerService;
-interface IRegistrationService{
+namespace SamplerService.Workers.PromouteRegistration.WorkerServices;
+public interface IRegistrationService
+{
     Task<ValueResult<ReservInfo>> TryGetAvalableRegistration(CancellationToken token);
     Task<ValueResult<ReservInfo>> TryGetReserveInfo(CancellationToken token);
     Task<Result> TryUpdateRegistration(ReservInfo reservInfo, CancellationToken token);
+    Task<Result> TryInsertRegistration(ReservInfo reservInfo, CancellationToken token);
 }
-class RegistrationService : IRegistrationService
+public class RegistrationService : IRegistrationService
 {
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IRegistrationHttpClient _registrationHttpClient;
     private readonly IResposeCache _resposeCache;
     private readonly ILogger<RegistrationService> _logger;
     private readonly RegistrationServiceSettings _settings;
 
-    public RegistrationService(IHttpClientFactory httpClientFactory, IResposeCache resposeCache, IOptions<RegistrationServiceSettings> settings, ILogger<RegistrationService> logger){
-        _httpClientFactory = httpClientFactory;
+    public RegistrationService(IResposeCache resposeCache, IOptions<RegistrationServiceSettings> settings, IRegistrationHttpClient registrationHttpClient, ILogger<RegistrationService> logger)
+    {
         _resposeCache = resposeCache;
         _settings = settings.Value;
         _logger = logger;
+        _registrationHttpClient = registrationHttpClient;
     }
-    public async Task<ValueResult<ReservInfo>> TryGetAvalableRegistration(CancellationToken token){
-        using var httpClient = _httpClientFactory.CreateClient(HttpClientNames.VisaTimetable);
+    public async Task<ValueResult<ReservInfo>> TryGetAvalableRegistration(CancellationToken token)
+    {
 
-        var date = await TryGetAvalableDate(httpClient, token);
+        var date = await TryGetAvalableDate(token);
         if (!date.IsOk) return new();
 
-        var time = await TryGetAvalableTimeId(httpClient, date.Value, token);
+        var time = await TryGetAvalableTimeId(date.Value, token);
         if (!time.IsOk) return new();
 
         return new(new(date.Value, time.Value));
     }
 
-    private async Task<ValueResult<DateOnly>> TryGetAvalableDate(HttpClient httpClient, CancellationToken token)
+    private async Task<ValueResult<DateOnly>> TryGetAvalableDate(CancellationToken token)
     {
-        var request = () => httpClient.GetAsync("vcs/get_nearest.htm?center=11&persons=&urgent=0&lang=ru", token);
+        var request = () => _registrationHttpClient.GetAvalableDate(token);
         var processor = () => request.InokeRequest(_logger);
         var response = await processor.RetryFor(_settings.TryCont, TimeSpan.FromSeconds(5));
         if (!response.IsOk) return new();
@@ -49,13 +53,14 @@ class RegistrationService : IRegistrationService
         if (date.HasValue) return new(date.Value);
 
         if (HasNoRegistration(content)) _logger.LogInformation(content);
-        else _logger.LogError($"Can't parse response to date: {content}");
+        else _logger.LogError($"Can't parse response to avalableDate: {content}");
         return new();
     }
 
-    private async Task<ValueResult<int>> TryGetAvalableTimeId(HttpClient httpClient, DateOnly date, CancellationToken token)
+    private async Task<ValueResult<int>> TryGetAvalableTimeId(DateOnly avalableDate, CancellationToken token)
     {
-        var request = () => httpClient.GetAsync($"vcs/get_times.htm?vtype=6&center=11&persons=1&appdate={date:dd.MM.yyyy}&fdate={/*TODO Add GetTravelDate*/_settings.UserTrevalDate:dd.MM.yyyy}&lang=ru", token);
+        var avalableTimeId = _settings.UserTrevalDate;
+        var request = () => _registrationHttpClient.GetAvalableTimeId(avalableDate, DateOnly.FromDateTime(avalableTimeId), token);
         var processor = () => request.InokeRequest(_logger);
         var response = await processor.RetryFor(_settings.TryCont, TimeSpan.FromSeconds(5));
         if (!response.IsOk) return new();
@@ -80,7 +85,7 @@ class RegistrationService : IRegistrationService
                 _logger.LogWarning("There are no avalable time range");
                 return new();
             }
-            if(int.TryParse(value, out int id)) return new(id);
+            if (int.TryParse(value, out int id)) return new(id);
 
             _logger.LogError($"Can't convert id \"{value}\" to int");
             return new();
@@ -91,7 +96,7 @@ class RegistrationService : IRegistrationService
             _logger.LogError(e, $"Unexpected content in GetTime response: {await reader.ReadToEndAsync()}");
             return new();
         }
-        
+
     }
     private static bool HasNoRegistration(string? rowResult) => rowResult == "На ближайшие 2 недели записи нет";
     private static DateOnly? ToDate(string? rowResult) => DateOnly.TryParseExact(rowResult?.Trim(), "dd.MM.yyyy", out var result) ? result : null;
@@ -104,12 +109,12 @@ class RegistrationService : IRegistrationService
     {
         if (_resposeCache.DateOfRegistration.HasValue) return new(_resposeCache.DateOfRegistration.Value);
 
-        var httpClient = _httpClientFactory.CreateClient(HttpClientNames.VisaTimetable);
-        var url = $"http://italy-vms.ru/autoform/?t={_settings.UserToken}&lang=ru";
-        var content = new StringContent($"action=reschedule&appdata=");
+        var request = () => _registrationHttpClient.GetReserveInfo(_settings.UserToken, token);
+        var processor = () => request.InokeRequest(_logger);
+        var message = await processor.RetryFor(_settings.TryCont, TimeSpan.FromSeconds(5));
+        if (!message.IsOk) return new();
 
-        var processor = () => TryGetReserveInfoInternal(httpClient, url, content, token);
-        return await processor.RetryFor(_settings.TryCont, TimeSpan.FromSeconds(5));
+        return await GetReserveInfoFromMessage(message.Value, token);
     }
 
     private static async Task<ValueResult<ReservInfo>> TryGetReserveInfoInternal(HttpClient httpClient, string url, StringContent content, CancellationToken token)
@@ -125,35 +130,37 @@ class RegistrationService : IRegistrationService
         return value.HasValue ? new(new(DateOnly.FromDateTime(value.Value), -1/*TODO Get time*/)) : new();
     }
 
-
-
-    public async Task<Result> TryUpdateRegistration(ReservInfo reservInfo, CancellationToken token)
+    private static async Task<ValueResult<ReservInfo>> GetReserveInfoFromMessage(HttpResponseMessage message, CancellationToken token)
     {
-        var httpClient = _httpClientFactory.CreateClient(HttpClientNames.VisaTimetable);
-        var url = $"http://italy-vms.ru/autoform/?t={_settings.UserToken}&lang=ru";
-        var content = new StringContent($"action=reschedule&appdata=&appdate={reservInfo.Date:dd.MM.yyyy}&apptime={reservInfo.TimeId}");
 
-        var processor = () => TryUpdateRegistrationInternal(httpClient, url, content, token);
-        var result = await processor.RetryFor(_settings.TryCont, TimeSpan.FromSeconds(5));
+        var html = new HtmlDocument();
+        html.Load(await message.Content.ReadAsStreamAsync());
 
-        _resposeCache.DateOfRegistration = result.IsOk? reservInfo : null; //if respose is not ok we can't be sure date updated or not, so we must to drop cache
-        return result;
+        var elemnt = html.GetElementbyId("appdate");
+        var value = elemnt.GetAttributeValue<DateTime?>("value", null);
+
+        return value.HasValue ? new(new(DateOnly.FromDateTime(value.Value), -1/*TODO Get time*/)) : new();
     }
 
-    private async Task<Result> TryUpdateRegistrationInternal(HttpClient httpClient, string url, StringContent content, CancellationToken token)
+
+
+    public async Task<Result> TryInsertRegistration(ReservInfo reservInfo, CancellationToken token)
     {
-        try
-        {
-            var response = await httpClient.PostAsync(url, content, token);
-            if (response.IsSuccessStatusCode) return new(true);
-            _logger.LogError($"[{response.StatusCode.ToString()}]: {response.Content.ReadAsStringAsync()}");
-            return new(false);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Http request failed");
-            return new(false);
-        }
+        var request = () => _registrationHttpClient.InsertRegistration(_settings.UserToken, _settings.UserPhone, reservInfo.Date, reservInfo.TimeId, token);
+        var processor = () => request.InokeRequest(_logger);
+        var message = await processor.RetryFor(_settings.TryCont, TimeSpan.FromSeconds(5));
+
+        _resposeCache.DateOfRegistration = message.IsOk ? reservInfo : null; //if respose is not ok we can't be sure avalableDate updated or not, so we must to drop cache
+        return new(true);
+    }
+    public async Task<Result> TryUpdateRegistration(ReservInfo reservInfo, CancellationToken token)
+    {
+        var request = () => _registrationHttpClient.UpdateRegistration(_settings.UserToken, reservInfo.Date, reservInfo.TimeId, token);
+        var processor = () => request.InokeRequest(_logger);
+        var message = await processor.RetryFor(_settings.TryCont, TimeSpan.FromSeconds(5));
+
+        _resposeCache.DateOfRegistration = message.IsOk ? reservInfo : null; //if respose is not ok we can't be sure avalableDate updated or not, so we must to drop cache
+        return new(true);
     }
 }
 public readonly record struct SampleResult(string? RowResult, DateOnly? DateResult, bool? HasNoRegistration, HttpStatusCode StatusCode);

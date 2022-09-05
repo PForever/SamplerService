@@ -1,4 +1,6 @@
-﻿public class LoggingHandler : DelegatingHandler
+﻿namespace SamplerService.SystemHelpers;
+
+public class LoggingHandler : DelegatingHandler
 {
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

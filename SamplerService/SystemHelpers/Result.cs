@@ -1,4 +1,4 @@
-﻿namespace SamplerService;
+﻿namespace SamplerService.SystemHelpers;
 
 public readonly record struct Result
 {
