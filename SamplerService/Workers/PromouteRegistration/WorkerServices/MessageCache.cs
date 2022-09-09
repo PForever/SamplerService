@@ -1,4 +1,4 @@
-﻿namespace SamplerService;
+﻿namespace SamplerService.Workers.PromouteRegistration.WorkerServices;
 
 public interface IMessageCache
 {
