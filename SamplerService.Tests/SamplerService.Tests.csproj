@@ -26,4 +26,16 @@
     <ProjectReference Include="..\SamplerService\SamplerService.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="RegistrationService_Tests\TestBuilder\Static\GetAvalableDate_OK.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="RegistrationService_Tests\TestBuilder\Static\GetAvalableTimeId_OK.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="RegistrationService_Tests\TestBuilder\Static\GetReserveInfo_OK.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -7,10 +7,6 @@ using System.Net;
 namespace SamplerService.Tests.RegistrationService_Tests.TestBuilders.ServiceBuilders;
 internal partial class RegistrationService_TestBuilder
 {
-
-    HttpClientBuilder => RegistrationHttpClientBuilder
-    Post, Get => GetAvalableDate, GetAvalableTimeId, GetReserveInfo, UpdateRegistration, InsertRegistration
-
     internal class HttpClientBuilder : BuilderBase<HttpClient>
     {
         public HttpClientBuilder()

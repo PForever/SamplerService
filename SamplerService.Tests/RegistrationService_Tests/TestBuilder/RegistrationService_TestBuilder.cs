@@ -10,22 +10,23 @@ using System.Text;
 using System.Threading.Tasks;
 using SamplerService.Tests.CommonBuilders;
 using static SamplerService.Tests.RegistrationService_Tests.TestBuilders.ServiceBuilders.RegistrationService_TestBuilder;
+using SamplerService.Tests.RegistrationService_Tests.TestBuilder.ServiceBuilders;
 
 namespace SamplerService.Tests.RegistrationService_Tests.TestBuilders;
 internal partial class RegistrationService_TestBuilder
 {
     internal async Task<ActResult<TResult>> Act<TResult>(Func<RegistrationService, CancellationToken, Task<TResult>> act, CancellationToken cancellationToken = default)
     {
-        var worker = new RegistrationService(_httpClientFactoryBuilder.Build(), _resposeCacheBuilder.Build(), _settingsBuilder.Build(), _loggerBuilder.Build());
+        var worker = new RegistrationService(_resposeCacheBuilder.Build(), _settingsBuilder.Build(), _registrationhttpClientBuilder.Build(), _loggerBuilder.Build());
         var result = await act(worker, cancellationToken).ConfigureAwait(false);
 
-        return new ActResult<TResult>(result, _httpClientFactoryBuilder, _resposeCacheBuilder, _settingsBuilder, _loggerBuilder);
+        return new ActResult<TResult>(result, _registrationhttpClientBuilder, _resposeCacheBuilder, _settingsBuilder, _loggerBuilder);
     }
 
-    private readonly HttpClientFactoryBuilder _httpClientFactoryBuilder = new();
-    internal RegistrationService_TestBuilder AddHttpClientFactory(Action<HttpClientFactoryBuilder> setuper)
+    private readonly RegistrationHttpClientBuilder _registrationhttpClientBuilder = new();
+    internal RegistrationService_TestBuilder AddRegistrationHttpClient(Action<RegistrationHttpClientBuilder> setuper)
     {
-        setuper(_httpClientFactoryBuilder);
+        setuper(_registrationhttpClientBuilder);
         return this;
     }
 

@@ -117,29 +117,15 @@ public class RegistrationService : IRegistrationService
         return await GetReserveInfoFromMessage(message.Value, token);
     }
 
-    private static async Task<ValueResult<ReservInfo>> TryGetReserveInfoInternal(HttpClient httpClient, string url, StringContent content, CancellationToken token)
-    {
-        var response = await httpClient.PostAsync(url, content, token);
-
-        var html = new HtmlDocument();
-        html.Load(response.Content.ReadAsStream());
-
-        var elemnt = html.GetElementbyId("appdate");
-        var value = elemnt.GetAttributeValue<DateTime?>("value", null);
-
-        return value.HasValue ? new(new(DateOnly.FromDateTime(value.Value), -1/*TODO Get time*/)) : new();
-    }
-
     private static async Task<ValueResult<ReservInfo>> GetReserveInfoFromMessage(HttpResponseMessage message, CancellationToken token)
     {
 
         var html = new HtmlDocument();
-        html.Load(await message.Content.ReadAsStreamAsync());
+        html.Load(await message.Content.ReadAsStreamAsync(token));
 
         var elemnt = html.GetElementbyId("appdate");
-        var value = elemnt.GetAttributeValue<DateTime?>("value", null);
-
-        return value.HasValue ? new(new(DateOnly.FromDateTime(value.Value), -1/*TODO Get time*/)) : new();
+        var value = elemnt.GetAttributeValue("value", null);
+        return !DateOnly.TryParseExact(value, "dd.MM.yyyy", out var date) ? (new()) : (new(new(date, -1/*TODO Get time*/)));
     }
 
 
