@@ -17,11 +17,25 @@ public class Worker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var input = Task.Run(Console.ReadKey);
+        var input = Task.Run(() =>
+        {
+            while (true)
+            {
+                var key = Console.ReadKey();
+                if (key.Key == ConsoleKey.Escape) return;
+            }
+        });
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
+                if (input.IsCompletedSuccessfully)
+                {
+                    await StopAsync(stoppingToken);
+                    _applicationLifetime.StopApplication();
+                    return;
+                }
+
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
 
                 var worker = await DoWorkAsync(stoppingToken);
@@ -29,11 +43,7 @@ public class Worker : BackgroundService
                 var delay = Task.Delay(worker.Delay, stoppingToken);
 
                 await Task.WhenAny(input, delay);
-                if(input.IsCompletedSuccessfully && input.Result.Key == ConsoleKey.Escape) {
-                    await StopAsync(stoppingToken);
-                    _applicationLifetime.StopApplication();
-                    return;
-            }
+
             }
             catch (OperationCanceledException)
             {
@@ -41,6 +51,8 @@ public class Worker : BackgroundService
             }
             catch (Exception e) {
                 _logger.LogError(e, "Job failed");
+                var delay = Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                await Task.WhenAny(input, delay);
             }
         }
     }

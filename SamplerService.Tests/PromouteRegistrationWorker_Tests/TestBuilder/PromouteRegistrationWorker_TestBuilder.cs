@@ -7,6 +7,8 @@ using SamplerService.Workers.PromouteRegistration;
 using System.Threading.Tasks.Dataflow;
 using SamplerService.Tests.CommonBuilders;
 using static SamplerService.Tests.PromouteRegistrationWorker_Tests.TestBuilder.PromouteRegistrationWorker_TestBuilder;
+using Moq;
+using SamplerService.CommonServices.Proxy;
 
 namespace SamplerService.Tests.PromouteRegistrationWorker_Tests.TestBuilder.ServiceBuilders;
 internal partial class PromouteRegistrationWorker_TestBuilder
@@ -17,6 +19,7 @@ internal partial class PromouteRegistrationWorker_TestBuilder
                                                     _botServiceBuilder.Build(),
                                                     _messageCacheBuilder.Build(),
                                                     _settingsBuilder.Build(),
+                                                    new Mock<IVpnService>().Object,
                                                     _loggerBuilder.Build());
 
         await act(worker, cancellationToken).ConfigureAwait(false);

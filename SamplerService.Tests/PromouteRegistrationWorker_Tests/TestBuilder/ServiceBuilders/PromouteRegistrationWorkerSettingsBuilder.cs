@@ -18,6 +18,11 @@ internal partial class PromouteRegistrationWorker_TestBuilder
             _settgings.IsRegistred = isRegistred;
             return this;
         }
+        public PromouteRegistrationWorkerSettingsBuilder SetDoRegisration(bool doRegisration)
+        {
+            _settgings.DoRegisration = doRegisration;
+            return this;
+        }
 
         public IOptions<PromouteRegistrationWorkerSettings> Build() => Options.Create(_settgings);
     }

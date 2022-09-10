@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using SamplerService.CommonServices;
+using SamplerService.CommonServices.Proxy;
 using SamplerService.SystemHelpers;
 using SamplerService.Workers.PromouteRegistration.WorkerServices;
 
@@ -11,19 +12,24 @@ public class PromouteRegistrationWorker : IBusinessWorker
     private readonly IRegistrationService _registrationService;
     private readonly IBotService _botService;
     private readonly IMessageCache _messageCache;
+    private readonly IVpnService _proxy;
     private readonly PromouteRegistrationWorkerSettings _settings;
     private readonly ILogger<PromouteRegistrationWorker> _logger;
     public TimeSpan Delay => TimeSpan.FromSeconds(_settings.JobDelaySeconds);
-    public PromouteRegistrationWorker(IRegistrationService registrationService, IBotService botService, IMessageCache messageCache, IOptions<PromouteRegistrationWorkerSettings> settings, ILogger<PromouteRegistrationWorker> logger)
+    public PromouteRegistrationWorker(IRegistrationService registrationService, IBotService botService, IMessageCache messageCache, IOptions<PromouteRegistrationWorkerSettings> settings,
+    IVpnService proxy, ILogger<PromouteRegistrationWorker> logger)
     {
         _registrationService = registrationService;
         _botService = botService;
         _messageCache = messageCache;
+        _proxy = proxy;
         _settings = settings.Value;
         _logger = logger;
     }
     public async Task DoWorkAsync(CancellationToken token)
     {
+        //0. Change IP address
+        await _proxy.ChangeIp();
 
         //1. Sample last avalable registration Date
         _logger.LogInformation("Sampling..");
@@ -37,6 +43,9 @@ public class PromouteRegistrationWorker : IBusinessWorker
             _logger.LogInformation($"Reservation anavalable");
             return;
         }
+
+        if (!_settings.DoRegisration)
+            return;
 
         if (!_settings.IsRegistred) //3.1 Then Try to get registration
         {

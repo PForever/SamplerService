@@ -3,5 +3,6 @@
 public class PromouteRegistrationWorkerSettings
 {
     public int JobDelaySeconds { get; set; }
+    public bool DoRegisration { get; set; }
     public bool IsRegistred { get; set; }
 }

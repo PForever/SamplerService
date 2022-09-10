@@ -52,15 +52,15 @@ public class RegistrationService : IRegistrationService
         var date = ToDate(content);
         if (date.HasValue) return new(date.Value);
 
-        if (HasNoRegistration(content)) _logger.LogInformation(content);
+        if (HasNoRegistration(content)) _logger.LogWarning(content);
         else _logger.LogError($"Can't parse response to avalableDate: {content}");
         return new();
     }
 
     private async Task<ValueResult<int>> TryGetAvalableTimeId(DateOnly avalableDate, CancellationToken token)
     {
-        var avalableTimeId = _settings.UserTrevalDate;
-        var request = () => _registrationHttpClient.GetAvalableTimeId(avalableDate, DateOnly.FromDateTime(avalableTimeId), token);
+        var travalDate = DateOnly.ParseExact(_settings.UserTrevalDate, RegistrationServiceSettings.Format);
+        var request = () => _registrationHttpClient.GetAvalableTimeId(avalableDate, travalDate, token);
         var processor = () => request.InokeRequest(_logger);
         var response = await processor.RetryFor(_settings.TryCont, TimeSpan.FromSeconds(5));
         if (!response.IsOk) return new();
