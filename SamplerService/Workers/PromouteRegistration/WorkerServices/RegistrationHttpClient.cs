@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Runtime;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Method = Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http.HttpMethod;
 
@@ -12,8 +13,9 @@ namespace SamplerService.Workers.PromouteRegistration.WorkerServices;
 
 public interface IRegistrationHttpClient
 {
-	Task<HttpResponseMessage> GetAvalableDate(CancellationToken token);
-	Task<HttpResponseMessage> GetAvalableTimeId(DateOnly avalableDate, DateOnly userTravalDate, CancellationToken token);
+	Task<HttpResponseMessage> GetRegistrationForm(CancellationToken token);
+	Task<HttpResponseMessage> GetAvalableDate(string registrationToken, CancellationToken token);
+	Task<HttpResponseMessage> GetAvalableTimeId(DateOnly avalableDate, DateOnly userTravalDate, string registrationToken, CancellationToken token);
 	Task<HttpResponseMessage> GetReserveInfo(string userToken, CancellationToken token);
 	Task<HttpResponseMessage> UpdateRegistration(string userToken, DateOnly avalableDate, int avalableTimeId, CancellationToken token);
 	Task<HttpResponseMessage> InsertRegistration(string userToken, string userPhone, DateOnly avalableDate, int avalableTimeId, CancellationToken token);
@@ -29,16 +31,24 @@ public class RegistrationHttpClient : IRegistrationHttpClient
 		_logger = logger;
 	}
 
-	public Task<HttpResponseMessage> GetAvalableDate(CancellationToken token)
+    public Task<HttpResponseMessage> GetRegistrationForm(CancellationToken token)
 	{
-		string url = "vcs/get_nearest.htm?center=11&persons=&urgent=0&lang=ru";
+        string url = "autoform/";
         TraceLog(Method.Get, url);
         return _httpClient.GetAsync(url, token);
     }
 
-	public Task<HttpResponseMessage> GetAvalableTimeId(DateOnly avalableDate, DateOnly userTravalDate, CancellationToken token)
+
+    public Task<HttpResponseMessage> GetAvalableDate(string registrationToken, CancellationToken token)
 	{
-		var url = $"vcs/get_times.htm?vtype=6&center=11&persons=1&appdate={avalableDate:dd.MM.yyyy}&fdate={/*TODO Add GetTravelDate*/userTravalDate:dd.MM.yyyy}&lang=ru";
+		string url = $"vcs/get_nearest.htm?center=11&persons=&urgent=0&token={registrationToken}&lang=ru";
+        TraceLog(Method.Get, url);
+        return _httpClient.GetAsync(url, token);
+    }
+
+	public Task<HttpResponseMessage> GetAvalableTimeId(DateOnly avalableDate, DateOnly userTravalDate, string registrationToken, CancellationToken token)
+	{
+        var url = $"vcs/get_times.htm?vtype=6&center=11&persons=1&appdate={avalableDate:dd.MM.yyyy}&fdate={/*TODO Add GetTravelDate*/userTravalDate:dd.MM.yyyy}&token={registrationToken}&lang=ru";
         TraceLog(Method.Get, url);
         return _httpClient.GetAsync(url, token);
 	}
@@ -68,7 +78,6 @@ public class RegistrationHttpClient : IRegistrationHttpClient
         TraceLog(Method.Post, url, content);
         return _httpClient.PostAsync(url, content, token);
     }
-
 	public Task<HttpResponseMessage> UpdateRegistration(string userToken, DateOnly avalableDate, int avalableTimeId, CancellationToken token)
 	{
         var url = $"http://italy-vms.ru/autoform/?t={userToken}&lang=ru";

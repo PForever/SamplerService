@@ -142,8 +142,8 @@ internal class RegistrationHttpClientBuilder : BuilderBase<IRegistrationHttpClie
 
         public GetAvalableTimeIdSetuper(Action<Action<Mock<IRegistrationHttpClient>>> settuper) => _settuper = settuper;
 
-        private readonly List<(DateOnly Avalalble, DateOnly Travel)> _inputs = new();
-        public IReadOnlyCollection<(DateOnly Avalalble, DateOnly Travel)> Inputs => _inputs;
+        private readonly List<(DateOnly Avalalble, DateOnly Travel, string Token)> _inputs = new();
+        public IReadOnlyCollection<(DateOnly Avalalble, DateOnly Travel, string Token)> Inputs => _inputs;
         public GetAvalableTimeIdSetuper Setup(string outputFilePath)
         {
             using var outputFile = File.OpenRead(outputFilePath);
@@ -157,8 +157,8 @@ internal class RegistrationHttpClientBuilder : BuilderBase<IRegistrationHttpClie
             var setup = (Mock<IRegistrationHttpClient> mock) =>
             {
                 var outputValue = output != null ? output : DefaultOutput;
-                Action<DateOnly, DateOnly, CancellationToken> invokeCallback = (avalableDate, travelDate, _) => _inputs.Add((avalableDate, travelDate));
-                mock.Setup(s => s.GetAvalableTimeId(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()))
+                Action<DateOnly, DateOnly, string, CancellationToken> invokeCallback = (avalableDate, travelDate, token, _) => _inputs.Add((avalableDate, travelDate, token));
+                mock.Setup(s => s.GetAvalableTimeId(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                     .ReturnsAsync(outputValue)
                     .Callback(invokeCallback);
             };
@@ -177,8 +177,8 @@ internal class RegistrationHttpClientBuilder : BuilderBase<IRegistrationHttpClie
 
         public GetAvalableDateSetuper(Action<Action<Mock<IRegistrationHttpClient>>> settuper) => _settuper = settuper;
 
-        private readonly List<CancellationToken> _inputs = new();
-        public IReadOnlyCollection<CancellationToken> Inputs => _inputs;
+        private readonly List<string> _inputs = new();
+        public IReadOnlyCollection<string> Inputs => _inputs;
         public GetAvalableDateSetuper Setup(string outputFilePath)
         {
             using var outputFile = File.OpenRead(outputFilePath);
@@ -192,8 +192,8 @@ internal class RegistrationHttpClientBuilder : BuilderBase<IRegistrationHttpClie
             var setup = (Mock<IRegistrationHttpClient> mock) =>
             {
                 var outputValue = output != null ? output : DefaultOutput;
-                Action<CancellationToken> invokeCallback = t => _inputs.Add(t);
-                mock.Setup(s => s.GetAvalableDate(It.IsAny<CancellationToken>()))
+                Action<string, CancellationToken> invokeCallback = (token, _) => _inputs.Add(token);
+                mock.Setup(s => s.GetAvalableDate(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                     .ReturnsAsync(outputValue)
                     .Callback(invokeCallback);
             };

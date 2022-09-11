@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using SamplerService.SystemHelpers;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 
 namespace SamplerService.Workers.PromouteRegistration.WorkerServices;
 public interface IRegistrationService
@@ -28,21 +29,39 @@ public class RegistrationService : IRegistrationService
     }
     public async Task<ValueResult<ReservInfo>> TryGetAvalableRegistration(CancellationToken token)
     {
+        var registrationToken = await GetRegistrationToken(token);
+        if (!registrationToken.IsOk)
+        {
+            _logger.LogError($"Can't got the registration token");
+            return new();
+        }
 
-        var date = await TryGetAvalableDate(token);
-        if (!date.IsOk) return new();
+        _logger.LogInformation($"Got token: {registrationToken.Value}");
 
-        var time = await TryGetAvalableTimeId(date.Value, token);
-        if (!time.IsOk) return new();
+        var date = await TryGetAvalableDate(registrationToken.Value, token);
+        if (!date.IsOk)
+        {
+            _logger.LogError($"Can't got the avalable date");
+            return new();
+        }
+
+        var time = await TryGetAvalableTimeId(date.Value, registrationToken.Value, token);
+        if (!time.IsOk)
+        {
+            _logger.LogError($"Can't got the avalable time");
+            return new();
+        }
 
         return new(new(date.Value, time.Value));
     }
 
-    private async Task<ValueResult<DateOnly>> TryGetAvalableDate(CancellationToken token)
+    private async Task<ValueResult<DateOnly>> TryGetAvalableDate(string registrationToken, CancellationToken token)
     {
-        var request = () => _registrationHttpClient.GetAvalableDate(token);
+        var request = () => _registrationHttpClient.GetAvalableDate(registrationToken, token);
         var processor = () => request.InokeRequest(_logger);
         var response = await processor.RetryFor(_settings.TryCont, TimeSpan.FromSeconds(5));
+
+
         if (!response.IsOk) return new();
 
         using var contentStream = await response.Value.Content.ReadAsStreamAsync(token);
@@ -57,20 +76,67 @@ public class RegistrationService : IRegistrationService
         return new();
     }
 
-    private async Task<ValueResult<int>> TryGetAvalableTimeId(DateOnly avalableDate, CancellationToken token)
+    private async Task<Result<string>> GetRegistrationToken(CancellationToken token)
+    {
+        var request = () => _registrationHttpClient.GetRegistrationForm(token);
+        var processor = () => request.InokeRequest(_logger);
+        var response = await processor.RetryFor(_settings.TryCont, TimeSpan.FromSeconds(5));
+
+        if (!response.IsOk) return new();
+
+        var content = await response.Value.Content.ReadAsStreamAsync();
+        return await TryParseRegistrationToken(content);
+    }
+
+    private static Regex _actionValuePattern = new Regex("/autoform/\\?t=(.*)=ru");
+    private async Task<Result<string>> TryParseRegistrationToken(Stream contentStream)
+    {
+        try
+        {
+            var html = new HtmlDocument();
+            html.Load(contentStream);
+            string? value = html.DocumentNode
+            .SelectNodes("//*[@id=\"app_form\"]/form")
+            .Select(e => e.GetAttributeValue("action", null))
+            .FirstOrDefault();
+            if (value is null)
+            {
+                _logger.LogError("There are no avalable time range");
+                return new();
+            }
+            var token = _actionValuePattern.Replace(value, "$1");
+
+            if(token == value)
+            {
+                _logger.LogError("Can't parse token from action attribute value");
+                return new();
+            }
+
+            return new(token);
+        }
+        catch (Exception e)
+        {
+            using var reader = new StreamReader(contentStream);
+            _logger.LogError(e, $"Unexpected content in GetTime response: {await reader.ReadToEndAsync()}");
+            return new();
+        }
+
+    }
+
+    private async Task<ValueResult<int>> TryGetAvalableTimeId(DateOnly avalableDate, string registrationToken, CancellationToken token)
     {
         var travalDate = DateOnly.ParseExact(_settings.UserTrevalDate, RegistrationServiceSettings.Format);
-        var request = () => _registrationHttpClient.GetAvalableTimeId(avalableDate, travalDate, token);
+        var request = () => _registrationHttpClient.GetAvalableTimeId(avalableDate, travalDate, registrationToken, token);
         var processor = () => request.InokeRequest(_logger);
         var response = await processor.RetryFor(_settings.TryCont, TimeSpan.FromSeconds(5));
         if (!response.IsOk) return new();
 
         using var contentStream = await response.Value.Content.ReadAsStreamAsync(token);
-        var time = await TryGetTimeId(contentStream);
+        var time = await TryParseTimeId(contentStream);
         return time;
     }
 
-    private async Task<ValueResult<int>> TryGetTimeId(Stream contentStream)
+    private async Task<ValueResult<int>> TryParseTimeId(Stream contentStream)
     {
         try
         {
