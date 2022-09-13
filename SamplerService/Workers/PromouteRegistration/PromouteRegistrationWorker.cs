@@ -72,7 +72,6 @@ public class PromouteRegistrationWorker : IBusinessWorker
             if (!NeedToChangeReserve(currentReservInfo.Value, avalableReservInfo.Value))
             {
                 _logger.LogInformation($"Don't need to reserv: {currentReservInfo.Value} <= {avalableReservInfo.Value}");
-                await _botService.SendMessage($"Не требуется изменение даты резервации: c {currentReservInfo.Value.Date} на {avalableReservInfo.Value.Date})", token);
                 return;
             }
 
