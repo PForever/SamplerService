@@ -1,9 +1,11 @@
 using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SamplerService.SystemHelpers;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using Telegram.Bot.Requests.Abstractions;
 
 namespace SamplerService.Workers.PromouteRegistration.WorkerServices;
 public interface IRegistrationService
@@ -210,10 +212,36 @@ public class RegistrationService : IRegistrationService
         _resposeCache.DateOfRegistration = message.IsOk ? reservInfo : null; //if respose is not ok we can't be sure avalableDate updated or not, so we must to drop cache
         return new(true);
     }
-    public async Task<Result> TryUpdateRegistration(ReservInfo reservInfo, CancellationToken token)
+    private async Task<Result> TryUpdateRegistrationInternal(ReservInfo reservInfo, CancellationToken token)
     {
         var request = () => _registrationHttpClient.UpdateRegistration(_settings.UserToken, reservInfo.Date, reservInfo.TimeId, token);
         var processor = () => request.InokeRequest(_logger);
+        var message = await processor.RetryFor(_settings.TryCont, TimeSpan.FromSeconds(5));
+
+        var response = await message.Value.Content.ReadAsStringAsync();
+        _logger.LogError(response);
+        return new(true);
+    }
+
+    public async Task<Result> TryUpdateRegistration(ReservInfo reservInfo, CancellationToken token)
+    {
+        async Task<Result> UpdateRegistration()
+        {
+            var resultUpdate = await TryUpdateRegistrationInternal(reservInfo, token);
+            var result = await TryGetReserveInfo(token);
+            if (!result.IsOk)
+            {
+                _logger.LogError("can't check weather registration date updated");
+                return new();
+            }
+            if (reservInfo.Date == result.Value.Date)
+            {
+                _logger.LogError("can't update registration date");
+                return new();
+            }
+            return new(true);
+        }
+        var processor = () => UpdateRegistration();
         var message = await processor.RetryFor(_settings.TryCont, TimeSpan.FromSeconds(5));
 
         _resposeCache.DateOfRegistration = message.IsOk ? reservInfo : null; //if respose is not ok we can't be sure avalableDate updated or not, so we must to drop cache

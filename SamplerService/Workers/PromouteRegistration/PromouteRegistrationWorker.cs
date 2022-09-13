@@ -99,6 +99,11 @@ public class PromouteRegistrationWorker : IBusinessWorker
     private async Task SentAvalableReservInfo(ValueResult<ReservInfo> avalableReservInfo, CancellationToken token)
     {
         var message = $"{(avalableReservInfo.IsOk ? $"Доступна регистрация на {avalableReservInfo.Value.Date}" : "Регистрация недоступна")}";
+        if (_messageCache.LastMessage is null && !avalableReservInfo.IsOk)
+        {
+            _messageCache.LastMessage = message;
+            return;
+        }
         if (_messageCache.LastMessage == message) return;
         await _botService.SendMessage(message, token);
         _messageCache.LastMessage = message;
