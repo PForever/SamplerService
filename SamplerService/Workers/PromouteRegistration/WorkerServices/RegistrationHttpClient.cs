@@ -55,7 +55,7 @@ public class RegistrationHttpClient : IRegistrationHttpClient
 
 	public Task<HttpResponseMessage> GetReserveInfo(string userToken, CancellationToken token)
 	{
-        var url = $"http://italy-vms.ru/autoform/?t={userToken}&lang=ru";
+        var url = $"autoform/?t={userToken}&lang=ru";
         var content = new StringContent($"action=reschedule&appdata=");
         TraceLog(Method.Post, url, content);
 		return _httpClient.PostAsync(url, content, token);
@@ -63,7 +63,7 @@ public class RegistrationHttpClient : IRegistrationHttpClient
 
 	public Task<HttpResponseMessage> InsertRegistration(string userToken, string userPhone, DateOnly avalableDate, int avalableTimeId, CancellationToken token)
 	{
-        var url = $"http://italy-vms.ru/autoform/?t={userToken}&lang=ru";
+        var url = $"autoform/?t={userToken}&lang=ru";
         var content = new StringContent(
             $"action=forward" +
             $"&mobile_ver=0" +
@@ -80,7 +80,7 @@ public class RegistrationHttpClient : IRegistrationHttpClient
     }
 	public Task<HttpResponseMessage> UpdateRegistration(string userToken, DateOnly avalableDate, int avalableTimeId, CancellationToken token)
 	{
-        var url = $"http://italy-vms.ru/autoform/?t={userToken}&lang=ru";
+        var url = $"autoform/?t={userToken}&lang=ru";
         var content = new StringContent($"action=reschedule&appdata=&appdate={avalableDate:dd.MM.yyyy}&apptime={avalableTimeId}");
         TraceLog(Method.Post, url, content);
         return _httpClient.PostAsync(url, content, token);

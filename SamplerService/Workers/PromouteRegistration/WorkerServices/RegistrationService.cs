@@ -183,13 +183,18 @@ public class RegistrationService : IRegistrationService
         return await GetReserveInfoFromMessage(message.Value, token);
     }
 
-    private static async Task<ValueResult<ReservInfo>> GetReserveInfoFromMessage(HttpResponseMessage message, CancellationToken token)
+    private async Task<ValueResult<ReservInfo>> GetReserveInfoFromMessage(HttpResponseMessage message, CancellationToken token)
     {
 
         var html = new HtmlDocument();
         html.Load(await message.Content.ReadAsStreamAsync(token));
 
         var elemnt = html.GetElementbyId("appdate");
+        if(elemnt is null)
+        {
+            _logger.LogError($"can't find \"appdata\" in response {await message.Content.ReadAsStringAsync()}");
+            return new();
+        }
         var value = elemnt.GetAttributeValue("value", null);
         return !DateOnly.TryParseExact(value, "dd.MM.yyyy", out var date) ? (new()) : (new(new(date, -1/*TODO Get time*/)));
     }
