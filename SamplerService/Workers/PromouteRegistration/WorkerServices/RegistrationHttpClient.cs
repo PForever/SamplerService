@@ -55,10 +55,9 @@ public class RegistrationHttpClient : IRegistrationHttpClient
 
 	public Task<HttpResponseMessage> GetReserveInfo(string userToken, CancellationToken token)
 	{
-        var url = $"autoform/?t={userToken}&lang=ru";
-        var content = new StringContent($"action=reschedule&appdata=");
-        TraceLog(Method.Post, url, content);
-		return _httpClient.PostAsync(url, content, token);
+        var url = $"autoform/?t={userToken}&action=reschedule";
+        TraceLog(Method.Get, url);
+		return _httpClient.GetAsync(url, token);
     }
 
 	public Task<HttpResponseMessage> InsertRegistration(string userToken, string userPhone, DateOnly avalableDate, int avalableTimeId, CancellationToken token)
