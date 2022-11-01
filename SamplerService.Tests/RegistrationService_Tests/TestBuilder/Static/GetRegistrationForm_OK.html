@@ -1,0 +1,254 @@
+﻿<div id="app_form">
+    <form action="/autoform?t=tmavx8s2qr-3241045-pkkg7pm58u8gqo95986mmk374uvzik8y1ri78r5qi3rgo&amp&lang=ru" method="POST"
+          name="dataform">
+        <input type="hidden" value="nothing" name="action" id="action">
+        <input type="hidden" value="" name="appdata" id="appdata">
+
+        <table width="100%">
+
+
+
+            <tbody>
+                <tr>
+                    <td align="center">
+
+                        <table width="600px" id="app_table" style="width: 600px;">
+
+
+
+                            <tbody>
+                                <tr>
+                                    <td colspan="2">
+                                        <br><br>
+                                        <h2>Назначить другую дату</h2><br>
+                                    </td>y=
+                                </tr>
+
+                                <tr>
+                                    <td colspan="2">&nbsp;</td>
+                                </tr>
+                                <tr>
+                                    <td width="60%"><label id="text">Новая дата записи</label></td>
+                                    <td>
+                                        <input class="input_width input_gen mobil_big width_full hasDatepicker" type="text"
+                                               value="05.10.2022" name="appdate" id="appdate"
+                                               onchange="update_timeslots();"><img class="ui-datepicker-trigger"
+                                                                                   src="/vcs/static/images/1x1.png" alt="..." title="...">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><label id="text">Новое время записи</label></td>
+                                    <td>
+                                        <select class="input_width select_gen mobil_big width_full" size="1" name="apptime"
+                                                title="" id="apptime" data-timeslot="5694" style="display: inline-block;">
+                                            <option value="0">Нет подходящих временных интервалов.</option>
+                                        </select>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td colspan="2">
+                                        <br>
+                                        <input class="small_button" type="button" value="◁ Вернуться"
+                                               onclick="go_button('nothing');" style="margin-bottom: 2px; height: 25px;">
+                                        <input class="small_button" type="button" value="Назначить другую дату ▷"
+                                               onclick="go_button('reschedule');"
+                                               style="margin-bottom: 2px; height: 25px;"><br>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td colspan="2">&nbsp;</td>
+                                </tr>
+
+
+
+                                <tr>
+                                    <td class="left" colspan="2">
+
+
+
+                                        <a class="dotted_link"
+                                           href="?t=tmavx8s2qr-3241045-pkkg7pm58u8gqo95986mmk374uvzik8y1ri78r5qi3rgo&amp;lang=en"
+                                           style="font-size: 12px;"><b>Switch to English</b></a>&nbsp;
+
+
+
+                                        <a class="dotted_link"
+                                           href="?t=tmavx8s2qr-3241045-pkkg7pm58u8gqo95986mmk374uvzik8y1ri78r5qi3rgo&amp;lang=it"
+                                           style="font-size: 12px;"><b>Passare all′italiano</b></a>
+
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+
+
+
+                        <script>
+
+
+                            $("#appdate").mask("99.99.9999");
+
+
+
+                            $(document).ready(update_timeslots());
+
+                            function update_timeslots() {
+
+                                $('#apptime').hide();
+                                $('#apptime').find('option').remove();
+                                $('#apptime').parent().prepend("<img id='tmp_img' src='/vcs/static/images/autoform_wait.gif' />");
+
+                                var reload_timeslot = $('#apptime').attr('data-timeslot');
+
+                                $.get("/vcs/get_times.htm", {
+                                    'vtype': '6',
+                                    'center': '11',
+                                    'persons': '1',
+                                    'appdate': $('#appdate').val(),
+                                    'fdate': '15.11.2022',
+                                    'lang': 'ru',
+
+                                }, function (xml) {
+
+                                    $(xml).find('node').each(function () {
+
+                                        var apptimeValue = $(this).find('id').text();
+                                        var apptimeText = $(this).find('title').text().split("&mdash;")[0];
+
+                                        $('#apptime').append(
+                                            '<option value="' + apptimeValue + '" ' +
+                                            (((apptimeValue == "") || (apptimeValue == reload_timeslot)) ? 'selected' : '')
+                                            + ' >' + apptimeText + '</option>'
+                                        );
+                                    });
+
+                                    $('#tmp_img').remove();
+                                    $('#apptime').show();
+
+
+
+                                    var al = $(xml).find('urgent_flag');
+
+                                    if (al.text() != '') {
+
+                                        alert(al.text());
+                                    }
+                                }, 'xml');
+                            };
+
+
+
+
+
+
+
+
+
+
+                            $(document).ready(mobileScreenCheck());
+
+                            function mobileScreenCheck() {
+
+
+
+                                $('#appdate').datepicker({
+                                    dateFormat: 'dd.mm.yy',
+                                    firstDay: 1,
+                                    showOn: 'both',
+                                    buttonImage: '/vcs/static/images/1x1.png',
+                                    buttonImageOnly: true
+                                });
+
+
+
+                                if (!mobilScreen) {
+
+
+
+                                    $('#app_table').css("width", '600px');
+                                    $('.big_button').css("height", '37px');
+                                    $('.big_button, .small_button').css("margin-bottom", '2px');
+                                    $('.small_button').css("height", '25px');
+                                    $('.m_left').css("text-align", 'right');
+                                    $('.m_right_m').css("white-space", 'nowrap');
+                                    $('.suppl_text, .dotted_link').css("font-size", '12px');
+
+                                    return;
+                                }
+
+                                $('#app_table').css("width", '100%');
+                                $('.big_button').css("height", '70px');
+                                $('.big_button, .small_button').css("margin-bottom", '15px');
+                                $('.small_button').css("height", '70px');
+                                $('.m_left').css("text-align", 'left');
+                                $('.m_right_m').css("white-space", 'normal');
+                                $('.suppl_text, .dotted_link').css("font-size", '15px');
+
+                                $('*').css("font-size", '15px');
+                                $('h2').css("font-size", '20px');
+
+                                $('.m_info').css("font-size", '30px');
+
+                                $('.spacer').html('&nbsp;&nbsp;');
+                                $('.spacer2').html('<br>');
+
+
+                                $('#app_date').datepicker('destroy');
+
+
+
+                                $("#app_table").each(function () {
+
+                                    $("td", this).each(function () {
+
+                                        $(this).css("display", 'block');
+                                        $(this).css("float", 'left');
+                                        $(this).css("width", '100%');
+                                    });
+                                });
+
+
+
+                                $('.mobil_big').css("height", "40px");
+                                $('.mobil_big').css("font-size", "30px");
+
+
+                                $('.mobil_hide').css("display", 'none');
+
+                                $('#comment_place').removeClass("grayborder");
+
+                                $('.small_button').css("width", '100%');
+
+                                $('#info_form').show();
+                            }
+
+
+
+
+
+
+
+                            function go_with_confirm() {
+
+                                if (confirm('Вы уверены, что скачали всё необходимое для пакета документов?'))
+                                    go_button('online_app', 'confirm_loaded');
+                            }
+
+                            function go_button(where, who) {
+                                $('#action').val(where);
+                                $('#appdata').val(who);
+                                document.dataform.submit();
+                            };
+
+                        </script>
+
+
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>

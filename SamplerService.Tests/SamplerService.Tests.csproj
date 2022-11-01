@@ -33,6 +33,9 @@
     <None Update="RegistrationService_Tests\TestBuilder\Static\GetAvalableTimeId_OK.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="RegistrationService_Tests\TestBuilder\Static\GetRegistrationForm_OK.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="RegistrationService_Tests\TestBuilder\Static\GetReserveInfo_OK.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -23,6 +23,7 @@ public class RegistrationService_PositivTest
             .AddSettings(s => s.SetUserPhone(userPhone).SetUserToken(userToken).SetTryCont(1).SetUserTrevalDate(travalDate))
             .AddRegistrationHttpClient(s =>
             {
+                s.GetRegistrationForm.Setup(@"RegistrationService_Tests\TestBuilder\Static\GetRegistrationForm_OK.html");
                 s.GetAvalableDate.Setup(@"RegistrationService_Tests\TestBuilder\Static\GetAvalableDate_OK.html");
                 s.GetAvalableTimeId.Setup(@"RegistrationService_Tests\TestBuilder\Static\GetAvalableTimeId_OK.html");
                 s.GetReserveInfo.Setup(@"RegistrationService_Tests\TestBuilder\Static\GetReserveInfo_OK.html");

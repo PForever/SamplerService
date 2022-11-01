@@ -13,6 +13,7 @@ internal class RegistrationHttpClientBuilder : BuilderBase<IRegistrationHttpClie
 {
     public RegistrationHttpClientBuilder()
     {
+        GetRegistrationForm = new(Setup);
         GetAvalableDate = new(Setup);
         GetAvalableTimeId = new(Setup);
         GetReserveInfo = new(Setup);
@@ -24,6 +25,7 @@ internal class RegistrationHttpClientBuilder : BuilderBase<IRegistrationHttpClie
     {
         base.DefaultSetup(mock);
 
+        GetRegistrationForm.Setup();
         GetAvalableDate.Setup();
         GetAvalableTimeId.Setup();
         GetReserveInfo.Setup();
@@ -194,6 +196,39 @@ internal class RegistrationHttpClientBuilder : BuilderBase<IRegistrationHttpClie
                 var outputValue = output != null ? output : DefaultOutput;
                 Action<string, CancellationToken> invokeCallback = (token, _) => _inputs.Add(token);
                 mock.Setup(s => s.GetAvalableDate(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(outputValue)
+                    .Callback(invokeCallback);
+            };
+            _settuper(setup);
+            return this;
+        }
+    }
+    public GetRegistrationFormSetuper GetRegistrationForm { get; }
+    public class GetRegistrationFormSetuper
+    {
+        public static HttpResponseMessage DefaultOutput { get; } = new(HttpStatusCode.OK);
+
+        private readonly Action<Action<Mock<IRegistrationHttpClient>>> _settuper;
+
+        public GetRegistrationFormSetuper(Action<Action<Mock<IRegistrationHttpClient>>> settuper) => _settuper = settuper;
+
+        private readonly List<CancellationToken> _inputs = new();
+        public IReadOnlyCollection<CancellationToken> Inputs => _inputs;
+        public GetRegistrationFormSetuper Setup(string outputFilePath)
+        {
+            using var outputFile = File.OpenRead(outputFilePath);
+            using var reader = new StreamReader(outputFile);
+            var content = new StringContent(reader.ReadToEnd());
+            var message = new HttpResponseMessage(HttpStatusCode.Created) { Content = content };
+            return Setup(message);
+        }
+        public GetRegistrationFormSetuper Setup(HttpResponseMessage? output = default)
+        {
+            var setup = (Mock<IRegistrationHttpClient> mock) =>
+            {
+                var outputValue = output != null ? output : DefaultOutput;
+                Action<CancellationToken> invokeCallback = (t) => _inputs.Add(t);
+                mock.Setup(s => s.GetRegistrationForm(It.IsAny<CancellationToken>()))
                     .ReturnsAsync(outputValue)
                     .Callback(invokeCallback);
             };

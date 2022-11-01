@@ -7,11 +7,12 @@ using System.Runtime;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using SamplerService.CommonServices;
 using Method = Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http.HttpMethod;
 
 namespace SamplerService.Workers.PromouteRegistration.WorkerServices;
 
-public interface IRegistrationHttpClient
+public interface IRegistrationHttpClient : IBusinessHttpClient
 {
 	Task<HttpResponseMessage> GetRegistrationForm(CancellationToken token);
 	Task<HttpResponseMessage> GetAvalableDate(string registrationToken, CancellationToken token);
@@ -25,9 +26,12 @@ public class RegistrationHttpClient : IRegistrationHttpClient
 	private readonly HttpClient _httpClient;
 	private readonly ILogger<RegistrationHttpClient> _logger;
 
-	public RegistrationHttpClient(IHttpClientFactory httpClientFactory, ILogger<RegistrationHttpClient> logger)
+    public static string ClientName => "VisaTimetable";
+    public static string BaseUrl => "https://italy-vms.ru/";
+
+    public RegistrationHttpClient(IHttpClientFactory httpClientFactory, ILogger<RegistrationHttpClient> logger)
 	{
-		_httpClient = httpClientFactory.CreateClient(HttpClientNames.VisaTimetable);
+		_httpClient = httpClientFactory.CreateClient(ClientName);
 		_logger = logger;
 	}
 

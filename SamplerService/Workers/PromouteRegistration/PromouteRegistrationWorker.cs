@@ -15,7 +15,6 @@ public class PromouteRegistrationWorker : IBusinessWorker
     private readonly IVpnService _proxy;
     private readonly PromouteRegistrationWorkerSettings _settings;
     private readonly ILogger<PromouteRegistrationWorker> _logger;
-    public TimeSpan Delay => TimeSpan.FromSeconds(_settings.JobDelaySeconds);
     public PromouteRegistrationWorker(IRegistrationService registrationService, IBotService botService, IMessageCache messageCache, IOptions<PromouteRegistrationWorkerSettings> settings,
     IVpnService proxy, ILogger<PromouteRegistrationWorker> logger)
     {

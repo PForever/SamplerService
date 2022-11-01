@@ -21,7 +21,7 @@ public class PromouteRegistrationWorker_PositivTests
                 s.TryInsertRegistration.Setup();
             })
             .AddBotService(s => s.SendMessage.Setup())
-            .AddPromouteRegistrationWorkerSettings(s => s.SetDelay(10).SetIsRegistred(true).SetDoRegisration(true))
+            .AddPromouteRegistrationWorkerSettings(s => s.SetIsRegistred(true).SetDoRegisration(true))
             .AddMessageCache(s => s.LastMessage.Setup())
             .AddLogger(s => s.Log.Setup());
 
@@ -51,7 +51,7 @@ public class PromouteRegistrationWorker_PositivTests
                 s.TryInsertRegistration.Setup();
             })
             .AddBotService(s => s.SendMessage.Setup())
-            .AddPromouteRegistrationWorkerSettings(s => s.SetDelay(10).SetIsRegistred(false).SetDoRegisration(true))
+            .AddPromouteRegistrationWorkerSettings(s => s.SetIsRegistred(false).SetDoRegisration(true))
             .AddMessageCache(s => s.LastMessage.Setup())
             .AddLogger(s => s.Log.Setup());
 
@@ -79,7 +79,7 @@ public class PromouteRegistrationWorker_PositivTests
                 s.TryInsertRegistration.Setup();
             })
             .AddBotService(s => s.SendMessage.Setup())
-            .AddPromouteRegistrationWorkerSettings(s => s.SetDelay(10).SetIsRegistred(false).SetDoRegisration(false))
+            .AddPromouteRegistrationWorkerSettings(s => s.SetIsRegistred(false).SetDoRegisration(false))
             .AddMessageCache(s => s.LastMessage.Setup())
             .AddLogger(s => s.Log.Setup());
 

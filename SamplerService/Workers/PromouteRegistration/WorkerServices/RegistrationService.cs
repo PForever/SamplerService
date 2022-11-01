@@ -90,7 +90,7 @@ public class RegistrationService : IRegistrationService
         return await TryParseRegistrationToken(content);
     }
 
-    private static Regex _actionValuePattern = new Regex("/autoform/\\?t=(.*)=ru");
+    private static Regex _actionValuePattern = new Regex(@"/autoform\?t=(.*)&amp.*");
     private async Task<Result<string>> TryParseRegistrationToken(Stream contentStream)
     {
         try

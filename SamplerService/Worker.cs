@@ -1,4 +1,6 @@
+using SamplerService.SystemHelpers;
 using SamplerService.Workers;
+using System.Runtime.CompilerServices;
 
 namespace SamplerService;
 
@@ -17,6 +19,8 @@ public class Worker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var settings = GetSettings();
+        var jobDelay = TimeSpan.FromSeconds(settings.JobDelaySeconds);
         var input = Task.Run(() =>
         {
             while (true)
@@ -38,9 +42,13 @@ public class Worker : BackgroundService
 
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
 
-                var worker = await DoWorkAsync(stoppingToken);
+                await foreach (var result in DoWorkAsync(stoppingToken))
+                {
+                    if (result.IsOk) _logger.LogInformation("Job succeed");
+                    else _logger.LogError("Job failed");
+                }
 
-                var delay = Task.Delay(worker.Delay, stoppingToken);
+                var delay = Task.Delay(jobDelay, stoppingToken);
 
                 await Task.WhenAny(input, delay);
 
@@ -57,10 +65,35 @@ public class Worker : BackgroundService
         }
     }
 
-    private async Task<IBusinessWorker> DoWorkAsync(CancellationToken token){
+    private JobWorkerSettings GetSettings()
+    {
         using var scope = _scopeFactory.CreateScope();
-        var worker = scope.ServiceProvider.GetRequiredService<IBusinessWorker>();
-        await worker.DoWorkAsync(token);
-        return worker;
+        return scope.ServiceProvider.GetConfiguration<JobWorkerSettings>();
     }
+    private async IAsyncEnumerable<Result> DoWorkAsync([EnumeratorCancellation] CancellationToken token)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var workers = scope.ServiceProvider.GetServices<IBusinessWorker>();
+        foreach (var worker in workers)
+        {
+            bool result;
+            try
+            {
+                await worker.DoWorkAsync(token);
+                token.ThrowIfCancellationRequested();
+                result = true;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Job failed");
+                result = false;
+            }
+            yield return new(result);
+        }
+    }
+}
+
+sealed class JobWorkerSettings
+{
+    public int JobDelaySeconds { get; private set; }
 }

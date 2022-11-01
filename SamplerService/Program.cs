@@ -23,9 +23,9 @@ services.Configure<JsonOptions>(options =>
 services.AddLogging();
 
 services.AddHostedService<Worker>();
-services.AddHttpClient(HttpClientNames.VisaTimetable, httpClient =>
+services.AddHttpClient(RegistrationHttpClient.ClientName, httpClient =>
 {
-    httpClient.BaseAddress = new Uri("https://italy-vms.ru/");
+    httpClient.BaseAddress = new Uri(RegistrationHttpClient.BaseUrl);
 }).ConfigurePrimaryHttpMessageHandler(builder =>
 {
     var settings = builder.GetRequiredService<ITorSharpSettingsFactory>().Settings;

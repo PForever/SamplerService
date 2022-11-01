@@ -7,12 +7,8 @@ internal partial class PromouteRegistrationWorker_TestBuilder
 {
     public class PromouteRegistrationWorkerSettingsBuilder : IBuilder<IOptions<PromouteRegistrationWorkerSettings>>
     {
-        private PromouteRegistrationWorkerSettings _settgings = new() { IsRegistred = true, JobDelaySeconds = 5 };
-        public PromouteRegistrationWorkerSettingsBuilder SetDelay(int delay)
-        {
-            _settgings.JobDelaySeconds = delay;
-            return this;
-        }
+        private PromouteRegistrationWorkerSettings _settgings = new() { IsRegistred = true };
+       
         public PromouteRegistrationWorkerSettingsBuilder SetIsRegistred(bool isRegistred)
         {
             _settgings.IsRegistred = isRegistred;
